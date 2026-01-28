@@ -1,7 +1,7 @@
 """Constants for the LubeLogger integration."""
 from typing import Final
 
-DOMAIN: Final = "lubelogger"
+DOMAIN: Final = "lubelogger-ha-intl"
 
 CONF_URL: Final = "url"
 CONF_USERNAME: Final = "username"

@@ -1,0 +1,13 @@
+{
+  "domain": "lubelogger-ha-intl",
+  "name": "lubelogger-ha-intl",
+  "codeowners": ["@ciux23"],
+  "config_flow": true,
+  "documentation": "https://github.com/ciux23/lubelogger-ha-intl",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/ciux23/lubelogger-ha-intl/issues",
+  "requirements": ["aiohttp>=3.8.0"],
+  "version": "1.0"
+}
+

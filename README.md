@@ -36,6 +36,13 @@ The integration supports multiple languages. Currently available:
 ## Support
 For issues or feature requests, please open an [Issue on GitHub](https://github.com/ciux23/lubelogger-ha-intl/issues).
 
+## Credits
+This integration is inspired by and based on the original [LubeLogger HA](https://github.com/hollowpnt92/lubelogger-ha) integration created by [hollowpnt92](https://github.com/hollowpnt92).
+
+The main modifications in this "International" version include:
+- Adaptation for the Metric System and European number/date formats.
+- Addition of Italian translations.
+
 ---
 
 # LubeLogger International per Home Assistant
@@ -75,3 +82,10 @@ L'integrazione supporta più lingue. Attualmente disponibile:
 
 ## Supporto
 Per problemi o richieste di funzionalità, apri una [Issue su GitHub](https://github.com/ciux23/lubelogger-ha-intl/issues).
+
+## Riconoscimenti
+Questa integrazione è ispirata e basata sull'integrazione originale [LubeLogger HA](https://github.com/hollowpnt92/lubelogger-ha) creata da [hollowpnt92](https://github.com/hollowpnt92).
+
+Le principali modifiche in questa versione "International" includono:
+- Adattamento per il Sistema Metrico e formati numerici/data europei.
+- Aggiunta delle traduzioni italiane.

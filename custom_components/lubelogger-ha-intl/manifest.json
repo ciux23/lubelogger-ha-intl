@@ -8,6 +8,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/ciux23/lubelogger-ha-intl/issues",
   "requirements": ["aiohttp>=3.8.0"],
+  "icon": "icon.png",
   "version": "1.0.0"
 }
 

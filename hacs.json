@@ -1,3 +1,5 @@
 {
-  "name": "LubeLogger International"
+  "name": "LubeLogger International",
+  "render_readme": true,
+  "homeassistant": "2025.1.0"
 }

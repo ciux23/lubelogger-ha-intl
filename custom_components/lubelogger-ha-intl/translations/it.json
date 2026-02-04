@@ -34,12 +34,12 @@
       "next_reminder": { "name": "Prossimo promemoria" }
     }
   },
-  "state_attributes": {
+  "state": {
     "sensor": {
       "next_reminder": {
         "urgency": {
-          "NotUrgent": "Non urgente",
-          "Urgent": "Urgente"
+          "noturgent": "Non urgente",
+          "urgent": "Urgente"
         }
       }
     }

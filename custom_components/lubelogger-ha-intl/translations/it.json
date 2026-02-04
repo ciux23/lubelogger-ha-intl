@@ -33,5 +33,15 @@
       "next_plan": { "name": "Prossimo piano" },
       "next_reminder": { "name": "Prossimo promemoria" }
     }
+  },
+  "state_attributes": {
+    "sensor": {
+      "next_reminder": {
+        "urgency": {
+          "NotUrgent": "Non urgente",
+          "Urgent": "Urgente"
+        }
+      }
+    }
   }
 }

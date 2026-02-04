@@ -34,14 +34,49 @@
       "next_reminder": { "name": "Prossimo promemoria" }
     }
   },
-  "state": {
-    "sensor": {
-      "next_reminder": {
-        "urgency": {
-          "noturgent": "Non urgente",
-          "urgent": "Urgente"
-        }
+  "urgency": {
+    "NotUrgent": "Non urgente",
+    "Urgent": "Urgente",
+    "PastDue": "Scaduto"
+  },
+  "reminder_type": {
+    "By time": "Per tempo",
+    "By distance": "Per distanza",
+    "Mixed": "Misto"
+  },
+  "status": {
+    "overdue": {
+      "distance": {
+        "template": "Scaduto da {value} km",
+        "1": "Scaduto da 1 km",
+        "10": "Scaduto da 10 km",
+        "100": "Scaduto da 100 km",
+        "1000": "Scaduto da 1000 km"
+      },
+      "days": {
+        "template": "Scaduto da {value} giorni",
+        "1": "Scaduto da 1 giorno",
+        "7": "Scaduto da 7 giorni",
+        "30": "Scaduto da 30 giorni",
+        "365": "Scaduto da 365 giorni"
       }
-    }
+    },
+    "future": {
+      "distance": {
+        "template": "Tra {value} km",
+        "1": "Tra 1 km",
+        "10": "Tra 10 km",
+        "100": "Tra 100 km",
+        "1000": "Tra 1000 km"
+      },
+      "days": {
+        "template": "Tra {value} giorni",
+        "1": "Tra 1 giorno",
+        "7": "Tra 7 giorni",
+        "30": "Tra 30 giorni",
+        "365": "Tra 365 giorni"
+      }
+    },
+    "generic": "Stato sconosciuto"
   }
 }

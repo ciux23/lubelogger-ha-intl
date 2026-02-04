@@ -3,6 +3,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
+import json
+import os
+import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -18,6 +21,8 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .coordinator import LubeLoggerDataUpdateCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def parse_date(date_str: str | None) -> datetime | None:
@@ -286,6 +291,92 @@ class BaseLubeLoggerSensor(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return if sensor is available."""
         return self._record is not None
+    
+    def _load_translations(self) -> dict:
+        """Load translations for the current language."""
+        if not hasattr(self, 'hass') or not self.hass:
+            return {}
+        
+        # Get current language (handle locales like it_IT -> it)
+        try:
+            lang = self.hass.config.language
+            if '_' in lang:
+                lang = lang.split('_')[0]
+            elif '-' in lang:
+                lang = lang.split('-')[0]
+        except:
+            lang = 'en'
+        
+        # Try to load translation file
+        translations = {}
+        try:
+            # Get the path to this integration
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            translations_dir = os.path.join(current_dir, "translations")
+            translation_file = os.path.join(translations_dir, f"{lang}.json")
+            
+            if os.path.exists(translation_file):
+                with open(translation_file, 'r', encoding='utf-8') as f:
+                    translations = json.load(f)
+            else:
+                # Fallback to English
+                en_file = os.path.join(translations_dir, "en.json")
+                if os.path.exists(en_file):
+                    with open(en_file, 'r', encoding='utf-8') as f:
+                        translations = json.load(f)
+        except Exception as e:
+            _LOGGER.debug("Error loading translations for %s: %s", lang, e)
+        
+        return translations
+    
+    def _translate_value(self, translation_key: str, default: str = None) -> str:
+        """Translate a value using the translation files.
+        
+        Args:
+            translation_key: Dot-separated key (e.g., "state_attributes.sensor.next_reminder.urgency.NotUrgent")
+            default: Default value if translation not found
+            
+        Returns:
+            Translated string or default value
+        """
+        translations = self._load_translations()
+        
+        # Navigate through the translation dictionary
+        keys = translation_key.split('.')
+        current = translations
+        
+        for key in keys:
+            if isinstance(current, dict) and key in current:
+                current = current[key]
+            else:
+                return default or keys[-1]
+        
+        if isinstance(current, str):
+            return current
+        
+        return default or keys[-1]
+    
+    def _translate_attribute(self, entity_type: str, attribute_name: str, value: str) -> str:
+        """Translate an attribute value.
+        
+        Args:
+            entity_type: Type of entity (e.g., "next_reminder")
+            attribute_name: Name of attribute (e.g., "urgency")
+            value: Value to translate (e.g., "NotUrgent")
+            
+        Returns:
+            Translated value or original if not found
+        """
+        # First try the full path
+        translation_key = f"state_attributes.sensor.{entity_type}.{attribute_name}.{value}"
+        translated = self._translate_value(translation_key, value)
+        
+        # If not found, try a simpler path
+        if translated == value:
+            translation_key = f"{attribute_name}.{value}"
+            translated = self._translate_value(translation_key, value)
+        
+        return translated
 
 
 class LubeLoggerLatestOdometerSensor(BaseLubeLoggerSensor):
@@ -831,61 +922,6 @@ class LubeLoggerLatestGasSensor(BaseLubeLoggerSensor):
 class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
     """Sensor for next reminder."""
 
-    # Traduzioni per 33 lingue
-    URGENCY_TRANSLATIONS = {
-        'en': {'NotUrgent': 'Not urgent', 'Urgent': 'Urgent', 'PastDue': 'Past due'},
-        'it': {'NotUrgent': 'Non urgente', 'Urgent': 'Urgente', 'PastDue': 'Scaduto'},
-        'fr': {'NotUrgent': 'Non urgent', 'Urgent': 'Urgent', 'PastDue': 'Échu'},
-        'de': {'NotUrgent': 'Nicht dringend', 'Urgent': 'Dringend', 'PastDue': 'Überfällig'},
-        'es': {'NotUrgent': 'No urgente', 'Urgent': 'Urgente', 'PastDue': 'Vencido'},
-        'pt': {'NotUrgent': 'Não urgente', 'Urgent': 'Urgente', 'PastDue': 'Vencido'},
-        'nl': {'NotUrgent': 'Niet urgent', 'Urgent': 'Urgent', 'PastDue': 'Verstreken'},
-        'pl': {'NotUrgent': 'Nie pilne', 'Urgent': 'Pilne', 'PastDue': 'Po terminie'},
-        'ru': {'NotUrgent': 'Не срочно', 'Urgent': 'Срочно', 'PastDue': 'Просрочено'},
-        'zh': {'NotUrgent': '不紧急', 'Urgent': '紧急', 'PastDue': '过期'},
-        'ja': {'NotUrgent': '緊急でない', 'Urgent': '緊急', 'PastDue': '期限切れ'},
-        'ko': {'NotUrgent': '긴급하지 않음', 'Urgent': '긴급', 'PastDue': '기한 경과'},
-        'ar': {'NotUrgent': 'غير عاجل', 'Urgent': 'عاجل', 'PastDue': 'منتهي الصلاحية'},
-        'tr': {'NotUrgent': 'Acil değil', 'Urgent': 'Acil', 'PastDue': 'Süresi dolmuş'},
-        'sv': {'NotUrgent': 'Inte brådskande', 'Urgent': 'Brådskande', 'PastDue': 'Förfallen'},
-        'da': {'NotUrgent': 'Ikke presserende', 'Urgent': 'Presserende', 'PastDue': 'Forfalden'},
-        'fi': {'NotUrgent': 'Ei kiireellinen', 'Urgent': 'Kiireellinen', 'PastDue': 'Erääntynyt'},
-        'no': {'NotUrgent': 'Ikke presserende', 'Urgent': 'Presserende', 'PastDue': 'Forfalt'},
-        'cs': {'NotUrgent': 'Není naléhavé', 'Urgent': 'Naléhavé', 'PastDue': 'Po splatnosti'},
-        'hu': {'NotUrgent': 'Nem sürgős', 'Urgent': 'Sürgős', 'PastDue': 'Lejárt'},
-        'ro': {'NotUrgent': 'Nu este urgent', 'Urgent': 'Urgent', 'PastDue': 'Expirat'},
-        'sk': {'NotUrgent': 'Nie naliehavé', 'Urgent': 'Naliehavé', 'PastDue': 'Po splatnosti'},
-        'sl': {'NotUrgent': 'Ni nujno', 'Urgent': 'Nujno', 'PastDue': 'Zapadlo'},
-        'bg': {'NotUrgent': 'Не спешно', 'Urgent': 'Спешно', 'PastDue': 'Просрочено'},
-        'el': {'NotUrgent': 'Όχι επείγον', 'Urgent': 'Επείγον', 'PastDue': 'Εκπρόθεσμο'},
-        'he': {'NotUrgent': 'לא דחוף', 'Urgent': 'דחוף', 'PastDue': 'פג תוקף'},
-        'hi': {'NotUrgent': 'अनिवार्य नहीं', 'Urgent': 'जरूरी', 'PastDue': 'निपटान बकाया'},
-        'th': {'NotUrgent': 'ไม่เร่งด่วน', 'Urgent': 'เร่งด่วน', 'PastDue': 'ค้างชำระ'},
-        'vi': {'NotUrgent': 'Không khẩn cấp', 'Urgent': 'Khẩn cấp', 'PastDue': 'Quá hạn'},
-        'id': {'NotUrgent': 'Tidak mendesak', 'Urgent': 'Mendesak', 'PastDue': 'Terlambat'},
-        'ms': {'NotUrgent': 'Tidak mendesak', 'Urgent': 'Mendesak', 'PastDue': 'Tertunggak'},
-        'uk': {'NotUrgent': 'Не терміново', 'Urgent': 'Терміново', 'PastDue': 'Прострочено'},
-        'ca': {'NotUrgent': 'No urgent', 'Urgent': 'Urgent', 'PastDue': 'Vençut'},
-        'af': {'NotUrgent': 'Nie dringend nie', 'Urgent': 'Dringend', 'PastDue': 'Verstreke'},
-        'sq': {'NotUrgent': 'Jo urgjent', 'Urgent': 'Urgjent', 'PastDue': 'I kaluar'},
-        'hy': {'NotUrgent': 'Ոչ շտապ', 'Urgent': 'Շտապ', 'PastDue': 'Ժամկետանց'},
-        'az': {'NotUrgent': 'Təcili deyil', 'Urgent': 'Təcili', 'PastDue': 'Müddəti bitmiş'},
-        'eu': {'NotUrgent': 'Ez da premiazkoa', 'Urgent': 'Premiazkoa', 'PastDue': 'Iraungita'},
-        'be': {'NotUrgent': 'Не тэрмінова', 'Urgent': 'Тэрмінова', 'PastDue': 'Прасрочаны'},
-        'bs': {'NotUrgent': 'Nije hitno', 'Urgent': 'Hitno', 'PastDue': 'Isteklo'},
-        'hr': {'NotUrgent': 'Nije hitno', 'Urgent': 'Hitno', 'PastDue': 'Isteklo'},
-        'et': {'NotUrgent': 'Pole kiire', 'Urgent': 'Kiire', 'PastDue': 'Tähtaja ületanud'},
-        'gl': {'NotUrgent': 'Non urxente', 'Urgent': 'Urxente', 'PastDue': 'Caducado'},
-        'ka': {'NotUrgent': 'არა სასწრაფო', 'Urgent': 'სასწრაფო', 'PastDue': 'ვადაგადაცილებული'},
-        'la': {'NotUrgent': 'Non urgente', 'Urgent': 'Urgente', 'PastDue': 'Praeteritum'},
-        'lv': {'NotUrgent': 'Nav steidzams', 'Urgent': 'Steidzams', 'PastDue': 'Nokavēts'},
-        'lt': {'NotUrgent': 'Neskubu', 'Urgent': 'Skubu', 'PastDue': 'Vėluoja'},
-        'mk': {'NotUrgent': 'Не итно', 'Urgent': 'Итно', 'PastDue': 'Истечено'},
-        'mt': {'NotUrgent': 'Mhux urgenti', 'Urgent': 'Urgenti', 'PastDue': 'Skadut'},
-        'fa': {'NotUrgent': 'فوری نیست', 'Urgent': 'فوری', 'PastDue': 'سررسید گذشته'},
-        'sr': {'NotUrgent': 'Није хитно', 'Urgent': 'Хитно', 'PastDue': 'Истекао'}
-    }
-
     def __init__(
         self,
         coordinator: LubeLoggerDataUpdateCoordinator,
@@ -965,43 +1001,62 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
         
         # Add info about the metric
         if "Odometer" in metric:
-            attrs["reminder_type"] = "By distance"
+            reminder_type = "By distance"
             if due_distance is not None:
                 if due_distance < 0:
-                    attrs["status"] = f"Overdue by {-due_distance} km"
+                    status = f"Overdue by {-due_distance} km"
                 else:
-                    attrs["status"] = f"In {due_distance} km"
+                    status = f"In {due_distance} km"
         elif "Date" in metric:
-            attrs["reminder_type"] = "By time"
+            reminder_type = "By time"
             if due_days is not None:
                 if due_days < 0:
-                    attrs["status"] = f"Overdue by {-due_days} days"
+                    status = f"Overdue by {-due_days} days"
                 else:
-                    attrs["status"] = f"In {due_days} days"
+                    status = f"In {due_days} days"
         else:
-            attrs["reminder_type"] = "Mixed"
+            reminder_type = "Mixed"
+            status = ""
         
-        # Traduci urgency se presente
+        attrs["reminder_type"] = reminder_type
+        attrs["status"] = status
+        
+        # Translate attributes using JSON files
         if "urgency" in attrs:
-            urgency_value = attrs["urgency"]
+            attrs["urgency"] = self._translate_attribute("next_reminder", "urgency", attrs["urgency"])
+        
+        if "reminder_type" in attrs:
+            attrs["reminder_type"] = self._translate_attribute("next_reminder", "reminder_type", attrs["reminder_type"])
+        
+        # Translate status message if it exists
+        if "status" in attrs and attrs["status"]:
+            status = attrs["status"]
             
-            # Ottieni la lingua corrente da Home Assistant
-            try:
-                language = self.hass.config.language
-                # Gestisce lingue come 'it_IT' -> 'it'
-                if '_' in language:
-                    language = language.split('_')[0]
-                elif '-' in language:
-                    language = language.split('-')[0]
-            except:
-                language = 'en'
+            # Determine status type and value
+            if "Overdue by" in status:
+                if "km" in status:
+                    status_key = "overdue_distance"
+                    value = abs(due_distance) if due_distance is not None else 0
+                else:  # days
+                    status_key = "overdue_days"
+                    value = abs(due_days) if due_days is not None else 0
+            elif "In " in status:
+                if "km" in status:
+                    status_key = "future_distance"
+                    value = due_distance if due_distance is not None else 0
+                else:  # days
+                    status_key = "future_days"
+                    value = due_days if due_days is not None else 0
+            else:
+                status_key = "generic"
+                value = 0
             
-            # Se la lingua non è supportata, fallback a inglese
-            if language not in self.URGENCY_TRANSLATIONS:
-                language = 'en'
+            # Get translation template
+            translation_key = f"state_attributes.sensor.next_reminder.status.{status_key}"
+            template = self._translate_value(translation_key, status)
             
-            # Applica la traduzione se disponibile
-            if urgency_value in self.URGENCY_TRANSLATIONS[language]:
-                attrs["urgency"] = self.URGENCY_TRANSLATIONS[language][urgency_value]
+            # Replace placeholder with actual value
+            if "{value}" in template and value is not None:
+                attrs["status"] = template.replace("{value}", str(value))
         
         return attrs

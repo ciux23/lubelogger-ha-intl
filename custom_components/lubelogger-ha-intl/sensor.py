@@ -3,6 +3,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
+import json
+import os
+import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -18,6 +21,8 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .coordinator import LubeLoggerDataUpdateCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def parse_date(date_str: str | None) -> datetime | None:
@@ -286,6 +291,34 @@ class BaseLubeLoggerSensor(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return if sensor is available."""
         return self._record is not None
+    
+    def _get_translation(self, key_path: str, default: str = None) -> str:
+        """Get translation for a specific key path."""
+        if not hasattr(self, 'hass') or not self.hass:
+            return default or key_path
+            
+        # Try to get translations from the integration
+        if DOMAIN in self.hass.data:
+            entry_id = self.coordinator.entry.entry_id
+            if entry_id in self.hass.data[DOMAIN]:
+                translations = self.hass.data[DOMAIN][entry_id].get("translations", {})
+                current_lang = self.hass.config.language
+                
+                # Navigate through the translation dictionary
+                if current_lang in translations:
+                    parts = key_path.split('.')
+                    current = translations[current_lang]
+                    
+                    for part in parts:
+                        if isinstance(current, dict) and part in current:
+                            current = current[part]
+                        else:
+                            break
+                    else:
+                        if isinstance(current, str):
+                            return current
+        
+        return default or key_path
 
 
 class LubeLoggerLatestOdometerSensor(BaseLubeLoggerSensor):
@@ -910,20 +943,58 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
         
         # Add info about the metric
         if "Odometer" in metric:
-            attrs["reminder_type"] = "By distance"
+            reminder_type = "By distance"
             if due_distance is not None:
                 if due_distance < 0:
-                    attrs["status"] = f"Overdue by {-due_distance} km"
+                    status = f"Overdue by {-due_distance} km"
                 else:
-                    attrs["status"] = f"In {due_distance} km"
+                    status = f"In {due_distance} km"
         elif "Date" in metric:
-            attrs["reminder_type"] = "By time"
+            reminder_type = "By time"
             if due_days is not None:
                 if due_days < 0:
-                    attrs["status"] = f"Overdue by {-due_days} days"
+                    status = f"Overdue by {-due_days} days"
                 else:
-                    attrs["status"] = f"In {due_days} days"
+                    status = f"In {due_days} days"
         else:
-            attrs["reminder_type"] = "Mixed"
+            reminder_type = "Mixed"
+            status = ""
+        
+      
+     
+        if "urgency" in attrs:
+            urgency_value = attrs["urgency"]
+            # Cerca la traduzione nel file JSON
+            translation_key = f"urgency.{urgency_value}"
+            translated = self._get_translation(translation_key, urgency_value)
+            attrs["urgency"] = translated
+        
+    
+        translation_key = f"reminder_type.{reminder_type}"
+        translated_type = self._get_translation(translation_key, reminder_type)
+        attrs["reminder_type"] = translated_type
+        
+    
+        if status:
+            # Usa il sistema di traduzione per lo status
+            status_key = self._create_status_translation_key(status, due_distance, due_days)
+            translated_status = self._get_translation(status_key, status)
+            attrs["status"] = translated_status
+        else:
+            attrs["status"] = ""
         
         return attrs
+    
+    def _create_status_translation_key(self, status: str, due_distance: int | None, due_days: int | None) -> str:
+        """Create a translation key for the status message."""
+        if "Overdue by" in status:
+            if "km" in status:
+                return f"status.overdue.distance.{abs(due_distance)}"
+            elif "days" in status:
+                return f"status.overdue.days.{abs(due_days)}"
+        elif "In" in status:
+            if "km" in status:
+                return f"status.future.distance.{due_distance}"
+            elif "days" in status:
+                return f"status.future.days.{due_days}"
+        return f"status.generic"

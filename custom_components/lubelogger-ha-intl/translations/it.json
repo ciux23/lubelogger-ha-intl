@@ -37,6 +37,7 @@
   "state_attributes": {
     "sensor": {
       "next_reminder": {
+        "and_conjunction": " e ",
         "urgency": {
           "NotUrgent": "Non urgente",
           "Urgent": "Urgente",
@@ -53,8 +54,8 @@
           "overdue_days": "Scaduto da {value} giorni",
           "future_distance": "Tra {value} km",
           "future_days": "Tra {value} giorni",
-          "due_today": "Oggi",
-          "due_now": "Ora (0 km)",
+          "due_today": "Scade oggi",
+          "due_now": "Scade ora",
           "generic": "Stato sconosciuto"
         }
       }

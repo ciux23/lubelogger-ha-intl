@@ -831,6 +831,61 @@ class LubeLoggerLatestGasSensor(BaseLubeLoggerSensor):
 class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
     """Sensor for next reminder."""
 
+    # Traduzioni per 33 lingue
+    URGENCY_TRANSLATIONS = {
+        'en': {'NotUrgent': 'Not urgent', 'Urgent': 'Urgent', 'PastDue': 'Past due'},
+        'it': {'NotUrgent': 'Non urgente', 'Urgent': 'Urgente', 'PastDue': 'Scaduto'},
+        'fr': {'NotUrgent': 'Non urgent', 'Urgent': 'Urgent', 'PastDue': 'Échu'},
+        'de': {'NotUrgent': 'Nicht dringend', 'Urgent': 'Dringend', 'PastDue': 'Überfällig'},
+        'es': {'NotUrgent': 'No urgente', 'Urgent': 'Urgente', 'PastDue': 'Vencido'},
+        'pt': {'NotUrgent': 'Não urgente', 'Urgent': 'Urgente', 'PastDue': 'Vencido'},
+        'nl': {'NotUrgent': 'Niet urgent', 'Urgent': 'Urgent', 'PastDue': 'Verstreken'},
+        'pl': {'NotUrgent': 'Nie pilne', 'Urgent': 'Pilne', 'PastDue': 'Po terminie'},
+        'ru': {'NotUrgent': 'Не срочно', 'Urgent': 'Срочно', 'PastDue': 'Просрочено'},
+        'zh': {'NotUrgent': '不紧急', 'Urgent': '紧急', 'PastDue': '过期'},
+        'ja': {'NotUrgent': '緊急でない', 'Urgent': '緊急', 'PastDue': '期限切れ'},
+        'ko': {'NotUrgent': '긴급하지 않음', 'Urgent': '긴급', 'PastDue': '기한 경과'},
+        'ar': {'NotUrgent': 'غير عاجل', 'Urgent': 'عاجل', 'PastDue': 'منتهي الصلاحية'},
+        'tr': {'NotUrgent': 'Acil değil', 'Urgent': 'Acil', 'PastDue': 'Süresi dolmuş'},
+        'sv': {'NotUrgent': 'Inte brådskande', 'Urgent': 'Brådskande', 'PastDue': 'Förfallen'},
+        'da': {'NotUrgent': 'Ikke presserende', 'Urgent': 'Presserende', 'PastDue': 'Forfalden'},
+        'fi': {'NotUrgent': 'Ei kiireellinen', 'Urgent': 'Kiireellinen', 'PastDue': 'Erääntynyt'},
+        'no': {'NotUrgent': 'Ikke presserende', 'Urgent': 'Presserende', 'PastDue': 'Forfalt'},
+        'cs': {'NotUrgent': 'Není naléhavé', 'Urgent': 'Naléhavé', 'PastDue': 'Po splatnosti'},
+        'hu': {'NotUrgent': 'Nem sürgős', 'Urgent': 'Sürgős', 'PastDue': 'Lejárt'},
+        'ro': {'NotUrgent': 'Nu este urgent', 'Urgent': 'Urgent', 'PastDue': 'Expirat'},
+        'sk': {'NotUrgent': 'Nie naliehavé', 'Urgent': 'Naliehavé', 'PastDue': 'Po splatnosti'},
+        'sl': {'NotUrgent': 'Ni nujno', 'Urgent': 'Nujno', 'PastDue': 'Zapadlo'},
+        'bg': {'NotUrgent': 'Не спешно', 'Urgent': 'Спешно', 'PastDue': 'Просрочено'},
+        'el': {'NotUrgent': 'Όχι επείγον', 'Urgent': 'Επείγον', 'PastDue': 'Εκπρόθεσμο'},
+        'he': {'NotUrgent': 'לא דחוף', 'Urgent': 'דחוף', 'PastDue': 'פג תוקף'},
+        'hi': {'NotUrgent': 'अनिवार्य नहीं', 'Urgent': 'जरूरी', 'PastDue': 'निपटान बकाया'},
+        'th': {'NotUrgent': 'ไม่เร่งด่วน', 'Urgent': 'เร่งด่วน', 'PastDue': 'ค้างชำระ'},
+        'vi': {'NotUrgent': 'Không khẩn cấp', 'Urgent': 'Khẩn cấp', 'PastDue': 'Quá hạn'},
+        'id': {'NotUrgent': 'Tidak mendesak', 'Urgent': 'Mendesak', 'PastDue': 'Terlambat'},
+        'ms': {'NotUrgent': 'Tidak mendesak', 'Urgent': 'Mendesak', 'PastDue': 'Tertunggak'},
+        'uk': {'NotUrgent': 'Не терміново', 'Urgent': 'Терміново', 'PastDue': 'Прострочено'},
+        'ca': {'NotUrgent': 'No urgent', 'Urgent': 'Urgent', 'PastDue': 'Vençut'},
+        'af': {'NotUrgent': 'Nie dringend nie', 'Urgent': 'Dringend', 'PastDue': 'Verstreke'},
+        'sq': {'NotUrgent': 'Jo urgjent', 'Urgent': 'Urgjent', 'PastDue': 'I kaluar'},
+        'hy': {'NotUrgent': 'Ոչ շտապ', 'Urgent': 'Շտապ', 'PastDue': 'Ժամկետանց'},
+        'az': {'NotUrgent': 'Təcili deyil', 'Urgent': 'Təcili', 'PastDue': 'Müddəti bitmiş'},
+        'eu': {'NotUrgent': 'Ez da premiazkoa', 'Urgent': 'Premiazkoa', 'PastDue': 'Iraungita'},
+        'be': {'NotUrgent': 'Не тэрмінова', 'Urgent': 'Тэрмінова', 'PastDue': 'Прасрочаны'},
+        'bs': {'NotUrgent': 'Nije hitno', 'Urgent': 'Hitno', 'PastDue': 'Isteklo'},
+        'hr': {'NotUrgent': 'Nije hitno', 'Urgent': 'Hitno', 'PastDue': 'Isteklo'},
+        'et': {'NotUrgent': 'Pole kiire', 'Urgent': 'Kiire', 'PastDue': 'Tähtaja ületanud'},
+        'gl': {'NotUrgent': 'Non urxente', 'Urgent': 'Urxente', 'PastDue': 'Caducado'},
+        'ka': {'NotUrgent': 'არა სასწრაფო', 'Urgent': 'სასწრაფო', 'PastDue': 'ვადაგადაცილებული'},
+        'la': {'NotUrgent': 'Non urgente', 'Urgent': 'Urgente', 'PastDue': 'Praeteritum'},
+        'lv': {'NotUrgent': 'Nav steidzams', 'Urgent': 'Steidzams', 'PastDue': 'Nokavēts'},
+        'lt': {'NotUrgent': 'Neskubu', 'Urgent': 'Skubu', 'PastDue': 'Vėluoja'},
+        'mk': {'NotUrgent': 'Не итно', 'Urgent': 'Итно', 'PastDue': 'Истечено'},
+        'mt': {'NotUrgent': 'Mhux urgenti', 'Urgent': 'Urgenti', 'PastDue': 'Skadut'},
+        'fa': {'NotUrgent': 'فوری نیست', 'Urgent': 'فوری', 'PastDue': 'سررسید گذشته'},
+        'sr': {'NotUrgent': 'Није хитно', 'Urgent': 'Хитно', 'PastDue': 'Истекао'}
+    }
+
     def __init__(
         self,
         coordinator: LubeLoggerDataUpdateCoordinator,
@@ -925,5 +980,28 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
                     attrs["status"] = f"In {due_days} days"
         else:
             attrs["reminder_type"] = "Mixed"
+        
+        # Traduci urgency se presente
+        if "urgency" in attrs:
+            urgency_value = attrs["urgency"]
+            
+            # Ottieni la lingua corrente da Home Assistant
+            try:
+                language = self.hass.config.language
+                # Gestisce lingue come 'it_IT' -> 'it'
+                if '_' in language:
+                    language = language.split('_')[0]
+                elif '-' in language:
+                    language = language.split('-')[0]
+            except:
+                language = 'en'
+            
+            # Se la lingua non è supportata, fallback a inglese
+            if language not in self.URGENCY_TRANSLATIONS:
+                language = 'en'
+            
+            # Applica la traduzione se disponibile
+            if urgency_value in self.URGENCY_TRANSLATIONS[language]:
+                attrs["urgency"] = self.URGENCY_TRANSLATIONS[language][urgency_value]
         
         return attrs

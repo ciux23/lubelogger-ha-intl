@@ -45,6 +45,7 @@
         "reminder_type": {
           "By time": "By time",
           "By distance": "By distance",
+          "Both": "Both",
           "Mixed": "Mixed"
         },
         "status": {
@@ -52,6 +53,8 @@
           "overdue_days": "Overdue by {value} days",
           "future_distance": "In {value} km",
           "future_days": "In {value} days",
+          "due_today": "Due today",
+          "due_now": "Due now (0 km)",
           "generic": "Unknown status"
         }
       }

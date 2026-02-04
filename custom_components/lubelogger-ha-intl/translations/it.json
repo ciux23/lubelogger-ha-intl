@@ -45,6 +45,7 @@
         "reminder_type": {
           "By time": "Per tempo",
           "By distance": "Per distanza",
+          "Both": "Entrambi",
           "Mixed": "Misto"
         },
         "status": {
@@ -52,6 +53,8 @@
           "overdue_days": "Scaduto da {value} giorni",
           "future_distance": "Tra {value} km",
           "future_days": "Tra {value} giorni",
+          "due_today": "Oggi",
+          "due_now": "Ora (0 km)",
           "generic": "Stato sconosciuto"
         }
       }

@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import logging
-import json
-import os
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -21,31 +19,6 @@ PLATFORMS: list[Platform] = [Platform.SENSOR]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-async def load_translations() -> dict:
-    """Load translation files from the translations directory."""
-    translations = {}
-    current_dir = os.path.dirname(__file__)
-    translations_dir = os.path.join(current_dir, "translations")
-    
-    if not os.path.exists(translations_dir):
-        _LOGGER.debug("No translations directory found")
-        return translations
-    
-    for filename in os.listdir(translations_dir):
-        if filename.endswith('.json'):
-            lang = filename.split('.')[0]
-            filepath = os.path.join(translations_dir, filename)
-            
-            try:
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    translations[lang] = json.load(f)
-                _LOGGER.debug("Loaded translations for language: %s", lang)
-            except Exception as e:
-                _LOGGER.error("Error loading translation file %s: %s", filename, e)
-    
-    return translations
-
-
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the LubeLogger integration."""
     _LOGGER.debug("LubeLogger integration is being set up")
@@ -57,18 +30,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info("Setting up LubeLogger integration entry: %s", entry.title)
     
     try:
-        # Load translations
-        translations = await load_translations()
-        
         coordinator = LubeLoggerDataUpdateCoordinator(hass, entry)
         await coordinator.async_config_entry_first_refresh()
 
-        # Store coordinator and translations
-        hass.data.setdefault(DOMAIN, {})
-        hass.data[DOMAIN][entry.entry_id] = {
-            "coordinator": coordinator,
-            "translations": translations
-        }
+        hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
         
@@ -90,3 +55,4 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.warning("Failed to unload LubeLogger integration platforms")
 
     return unload_ok
+

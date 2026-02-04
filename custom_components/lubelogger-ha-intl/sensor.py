@@ -1000,17 +1000,27 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
         if overdue_by:
             attrs["overdue_by"] = overdue_by
         
-        # Determine reminder type
-        if "Odometer" in metric and "Date" not in metric:
-            reminder_type = "By distance"
-        elif "Date" in metric and "Odometer" not in metric:
-            reminder_type = "By time"
-        else:
-            reminder_type = "Both"
+        # Determina che tipo di reminder è in base alla metrica
+        metric_lower = metric.lower() if metric else ""
+        show_days = False
+        show_distance = False
         
-        # 
-        show_days = "Date" in metric  
-        show_distance = "Odometer" in metric  
+        # Logica corretta per interpretare la metrica
+        if metric_lower == "date":
+            show_days = True
+            show_distance = False
+        elif metric_lower == "odometer":
+            show_days = False
+            show_distance = True
+        elif metric_lower in ["both", "dateandodometer"]:
+            show_days = True
+            show_distance = True
+        else:
+            # Fallback: controlla se contiene le parole
+            if "date" in metric_lower:
+                show_days = True
+            if "odometer" in metric_lower:
+                show_distance = True
         
         # Create display attributes for dueDays and dueDistance - solo se rilevanti
         combined_parts = []
@@ -1031,7 +1041,7 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
             else:
                 combined_parts.append(f"In {due_distance} km")
         
-        # 
+        # Tradurre le parti individuali
         translated_parts = []
         for part in combined_parts:
             if "Overdue by" in part and "days" in part:
@@ -1120,10 +1130,20 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
         else:
             attrs["dueDistance_display"] = ""
         
+        # Determine reminder type
+        if metric_lower == "date":
+            reminder_type = "By time"
+        elif metric_lower == "odometer":
+            reminder_type = "By distance"
+        elif metric_lower in ["both", "dateandodometer"]:
+            reminder_type = "Both"
+        else:
+            reminder_type = "Mixed"
+        
         # Create status message (will be translated later)
         status_parts = []
         
-        if due_days is not None:
+        if show_days and due_days is not None:
             if due_days < 0:
                 status_parts.append(f"Overdue by {-due_days} days")
             elif due_days == 0:
@@ -1131,7 +1151,7 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
             else:
                 status_parts.append(f"In {due_days} days")
         
-        if due_distance is not None:
+        if show_distance and due_distance is not None:
             if due_distance < 0:
                 status_parts.append(f"Overdue by {-due_distance} km")
             elif due_distance == 0:

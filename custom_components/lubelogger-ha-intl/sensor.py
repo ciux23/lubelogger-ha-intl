@@ -976,7 +976,7 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
             except (ValueError, TypeError):
                 pass
         
-        # Calculate the actual status of the reminder
+        # Get reminder values
         due_distance = attrs.get("dueDistance")
         due_days = attrs.get("dueDays")
         metric = attrs.get("metric", "")
@@ -999,23 +999,85 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
         if overdue_by:
             attrs["overdue_by"] = overdue_by
         
-        # Add info about the metric
-        if "Odometer" in metric:
+        # Determine reminder type
+        if "Odometer" in metric and "Date" not in metric:
             reminder_type = "By distance"
-            if due_distance is not None:
-                if due_distance < 0:
-                    status = f"Overdue by {-due_distance} km"
-                else:
-                    status = f"In {due_distance} km"
-        elif "Date" in metric:
+        elif "Date" in metric and "Odometer" not in metric:
             reminder_type = "By time"
-            if due_days is not None:
-                if due_days < 0:
-                    status = f"Overdue by {-due_days} days"
-                else:
-                    status = f"In {due_days} days"
         else:
-            reminder_type = "Mixed"
+            reminder_type = "Both"
+        
+        # Create display attributes for dueDays and dueDistance
+        if due_days is not None:
+            if due_days < 0:
+                attrs["dueDays_display"] = f"Overdue by {-due_days} days"
+            elif due_days == 0:
+                attrs["dueDays_display"] = "Due today"
+            else:
+                attrs["dueDays_display"] = f"In {due_days} days"
+        
+        if due_distance is not None:
+            if due_distance < 0:
+                attrs["dueDistance_display"] = f"Overdue by {-due_distance} km"
+            elif due_distance == 0:
+                attrs["dueDistance_display"] = "Due now (0 km)"
+            else:
+                attrs["dueDistance_display"] = f"In {due_distance} km"
+        
+        # Create combined display attribute
+        combined_parts = []
+        
+        if due_days is not None:
+            if due_days < 0:
+                combined_parts.append(f"Overdue by {-due_days} days")
+            elif due_days == 0:
+                combined_parts.append("Due today")
+            else:
+                combined_parts.append(f"In {due_days} days")
+        
+        if due_distance is not None:
+            if due_distance < 0:
+                combined_parts.append(f"Overdue by {-due_distance} km")
+            elif due_distance == 0:
+                combined_parts.append("Due now (0 km)")
+            else:
+                combined_parts.append(f"In {due_distance} km")
+        
+        # Combine with " and " if both exist
+        if combined_parts:
+            if len(combined_parts) == 2:
+                attrs["combined_display"] = f"{combined_parts[0]} and {combined_parts[1]}"
+            else:
+                attrs["combined_display"] = combined_parts[0]
+        else:
+            attrs["combined_display"] = ""
+        
+        # Create status message (will be translated later)
+        status_parts = []
+        
+        if due_days is not None:
+            if due_days < 0:
+                status_parts.append(f"Overdue by {-due_days} days")
+            elif due_days == 0:
+                status_parts.append("Due today")
+            else:
+                status_parts.append(f"In {due_days} days")
+        
+        if due_distance is not None:
+            if due_distance < 0:
+                status_parts.append(f"Overdue by {-due_distance} km")
+            elif due_distance == 0:
+                status_parts.append("Due now (0 km)")
+            else:
+                status_parts.append(f"In {due_distance} km")
+        
+        # Combine status
+        if status_parts:
+            if len(status_parts) == 2:
+                status = f"{status_parts[0]} and {status_parts[1]}"
+            else:
+                status = status_parts[0]
+        else:
             status = ""
         
         attrs["reminder_type"] = reminder_type
@@ -1028,25 +1090,31 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
         if "reminder_type" in attrs:
             attrs["reminder_type"] = self._translate_attribute("next_reminder", "reminder_type", attrs["reminder_type"])
         
-        # Translate status message if it exists
+        # Translate status message
         if "status" in attrs and attrs["status"]:
             status = attrs["status"]
             
-            # Determine status type and value
+            # Determine status type for translation
             if "Overdue by" in status:
-                if "km" in status:
-                    status_key = "overdue_distance"
-                    value = abs(due_distance) if due_distance is not None else 0
-                else:  # days
+                if "days" in status:
                     status_key = "overdue_days"
                     value = abs(due_days) if due_days is not None else 0
+                else:  # km
+                    status_key = "overdue_distance"
+                    value = abs(due_distance) if due_distance is not None else 0
             elif "In " in status:
-                if "km" in status:
-                    status_key = "future_distance"
-                    value = due_distance if due_distance is not None else 0
-                else:  # days
+                if "days" in status:
                     status_key = "future_days"
                     value = due_days if due_days is not None else 0
+                else:  # km
+                    status_key = "future_distance"
+                    value = due_distance if due_distance is not None else 0
+            elif "Due today" in status:
+                status_key = "due_today"
+                value = 0
+            elif "Due now" in status:
+                status_key = "due_now"
+                value = 0
             else:
                 status_key = "generic"
                 value = 0

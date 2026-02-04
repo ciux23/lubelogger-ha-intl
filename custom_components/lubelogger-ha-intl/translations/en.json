@@ -37,6 +37,7 @@
   "state_attributes": {
     "sensor": {
       "next_reminder": {
+        "and_conjunction": " and ",
         "urgency": {
           "NotUrgent": "Not urgent",
           "Urgent": "Urgent",
@@ -54,7 +55,7 @@
           "future_distance": "In {value} km",
           "future_days": "In {value} days",
           "due_today": "Due today",
-          "due_now": "Due now (0 km)",
+          "due_now": "Due now",
           "generic": "Unknown status"
         }
       }

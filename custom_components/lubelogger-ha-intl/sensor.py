@@ -6,6 +6,7 @@ from typing import Any
 import json
 import os
 import logging
+import re
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -1007,27 +1008,14 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
         else:
             reminder_type = "Both"
         
-        # Create display attributes for dueDays and dueDistance
-        if due_days is not None:
-            if due_days < 0:
-                attrs["dueDays_display"] = f"Overdue by {-due_days} days"
-            elif due_days == 0:
-                attrs["dueDays_display"] = "Due today"
-            else:
-                attrs["dueDays_display"] = f"In {due_days} days"
+        # 
+        show_days = "Date" in metric  
+        show_distance = "Odometer" in metric  
         
-        if due_distance is not None:
-            if due_distance < 0:
-                attrs["dueDistance_display"] = f"Overdue by {-due_distance} km"
-            elif due_distance == 0:
-                attrs["dueDistance_display"] = "Due now (0 km)"
-            else:
-                attrs["dueDistance_display"] = f"In {due_distance} km"
-        
-        # Create combined display attribute
+        # Create display attributes for dueDays and dueDistance - solo se rilevanti
         combined_parts = []
         
-        if due_days is not None:
+        if show_days and due_days is not None:
             if due_days < 0:
                 combined_parts.append(f"Overdue by {-due_days} days")
             elif due_days == 0:
@@ -1035,22 +1023,102 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
             else:
                 combined_parts.append(f"In {due_days} days")
         
-        if due_distance is not None:
+        if show_distance and due_distance is not None:
             if due_distance < 0:
                 combined_parts.append(f"Overdue by {-due_distance} km")
             elif due_distance == 0:
-                combined_parts.append("Due now (0 km)")
+                combined_parts.append("Due now")
             else:
                 combined_parts.append(f"In {due_distance} km")
         
-        # Combine with " and " if both exist
-        if combined_parts:
-            if len(combined_parts) == 2:
-                attrs["combined_display"] = f"{combined_parts[0]} and {combined_parts[1]}"
+        # 
+        translated_parts = []
+        for part in combined_parts:
+            if "Overdue by" in part and "days" in part:
+                match = re.search(r'Overdue by (\d+) days', part)
+                if match:
+                    translated = self._translate_attribute("next_reminder", "status", "overdue_days")
+                    translated_parts.append(translated.replace("{value}", match.group(1)))
+                else:
+                    translated_parts.append(part)
+            elif "In" in part and "days" in part:
+                match = re.search(r'In (\d+) days', part)
+                if match:
+                    translated = self._translate_attribute("next_reminder", "status", "future_days")
+                    translated_parts.append(translated.replace("{value}", match.group(1)))
+                else:
+                    translated_parts.append(part)
+            elif "Overdue by" in part and "km" in part:
+                match = re.search(r'Overdue by (\d+) km', part)
+                if match:
+                    translated = self._translate_attribute("next_reminder", "status", "overdue_distance")
+                    translated_parts.append(translated.replace("{value}", match.group(1)))
+                else:
+                    translated_parts.append(part)
+            elif "In" in part and "km" in part:
+                match = re.search(r'In (\d+) km', part)
+                if match:
+                    translated = self._translate_attribute("next_reminder", "status", "future_distance")
+                    translated_parts.append(translated.replace("{value}", match.group(1)))
+                else:
+                    translated_parts.append(part)
+            elif "Due today" in part:
+                translated_parts.append(self._translate_attribute("next_reminder", "status", "due_today"))
+            elif "Due now" in part:
+                translated_parts.append(self._translate_attribute("next_reminder", "status", "due_now"))
             else:
-                attrs["combined_display"] = combined_parts[0]
+                translated_parts.append(part)
+        
+        # Ora combina le parti tradotte
+        if translated_parts:
+            if len(translated_parts) == 2:
+                and_conjunction = self._translate_attribute("next_reminder", "and_conjunction", " and ")
+                attrs["combined_display"] = f"{translated_parts[0]}{and_conjunction}{translated_parts[1]}"
+            else:
+                attrs["combined_display"] = translated_parts[0]
         else:
             attrs["combined_display"] = ""
+        
+        # Aggiorna anche i singoli display per coerenza
+        if show_days and due_days is not None:
+            if due_days < 0:
+                attrs["dueDays_display"] = f"Overdue by {-due_days} days"
+            elif due_days == 0:
+                attrs["dueDays_display"] = "Due today"
+            else:
+                attrs["dueDays_display"] = f"In {due_days} days"
+            
+            # Traduci anche i singoli display
+            if due_days < 0:
+                translated = self._translate_attribute("next_reminder", "status", "overdue_days")
+                attrs["dueDays_display"] = translated.replace("{value}", str(-due_days))
+            elif due_days == 0:
+                attrs["dueDays_display"] = self._translate_attribute("next_reminder", "status", "due_today")
+            else:
+                translated = self._translate_attribute("next_reminder", "status", "future_days")
+                attrs["dueDays_display"] = translated.replace("{value}", str(due_days))
+        else:
+            attrs["dueDays_display"] = ""
+        
+        if show_distance and due_distance is not None:
+            if due_distance < 0:
+                attrs["dueDistance_display"] = f"Overdue by {-due_distance} km"
+            elif due_distance == 0:
+                attrs["dueDistance_display"] = "Due now"
+            else:
+                attrs["dueDistance_display"] = f"In {due_distance} km"
+            
+            # Traduci anche i singoli display
+            if due_distance < 0:
+                translated = self._translate_attribute("next_reminder", "status", "overdue_distance")
+                attrs["dueDistance_display"] = translated.replace("{value}", str(-due_distance))
+            elif due_distance == 0:
+                attrs["dueDistance_display"] = self._translate_attribute("next_reminder", "status", "due_now")
+            else:
+                translated = self._translate_attribute("next_reminder", "status", "future_distance")
+                attrs["dueDistance_display"] = translated.replace("{value}", str(due_distance))
+        else:
+            attrs["dueDistance_display"] = ""
         
         # Create status message (will be translated later)
         status_parts = []
@@ -1067,7 +1135,7 @@ class LubeLoggerNextReminderSensor(BaseLubeLoggerSensor):
             if due_distance < 0:
                 status_parts.append(f"Overdue by {-due_distance} km")
             elif due_distance == 0:
-                status_parts.append("Due now (0 km)")
+                status_parts.append("Due now")
             else:
                 status_parts.append(f"In {due_distance} km")
         

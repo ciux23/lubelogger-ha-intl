@@ -1,4 +1,5 @@
 {
+  "title": "LubeLogger",
   "config": {
     "step": {
       "user": {
@@ -18,6 +19,42 @@
     },
     "abort": {
       "already_configured": "Already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "latest_odometer": { "name": "Latest Odometer" },
+      "latest_service": { "name": "Last Service" },
+      "latest_repair": { "name": "Last Repair" },
+      "latest_upgrade": { "name": "Last Upgrade" },
+      "latest_supply": { "name": "Last Supply" },
+      "latest_gas": { "name": "Last Refuel" },
+      "latest_tax": { "name": "Latest Tax" },
+      "next_plan": { "name": "Next Plan" },
+      "next_reminder": { "name": "Next Reminder" }
+    }
+  },
+  "state_attributes": {
+    "sensor": {
+      "next_reminder": {
+        "urgency": {
+          "NotUrgent": "Not urgent",
+          "Urgent": "Urgent",
+          "PastDue": "Past due"
+        },
+        "reminder_type": {
+          "By time": "By time",
+          "By distance": "By distance",
+          "Mixed": "Mixed"
+        },
+        "status": {
+          "overdue_distance": "Overdue by {value} km",
+          "overdue_days": "Overdue by {value} days",
+          "future_distance": "In {value} km",
+          "future_days": "In {value} days",
+          "generic": "Unknown status"
+        }
+      }
     }
   }
 }

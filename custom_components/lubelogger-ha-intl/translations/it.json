@@ -33,5 +33,28 @@
       "next_plan": { "name": "Prossimo piano" },
       "next_reminder": { "name": "Prossimo promemoria" }
     }
+  },
+  "state_attributes": {
+    "sensor": {
+      "next_reminder": {
+        "urgency": {
+          "NotUrgent": "Non urgente",
+          "Urgent": "Urgente",
+          "PastDue": "Scaduto"
+        },
+        "reminder_type": {
+          "By time": "Per tempo",
+          "By distance": "Per distanza",
+          "Mixed": "Misto"
+        },
+        "status": {
+          "overdue_distance": "Scaduto da {value} km",
+          "overdue_days": "Scaduto da {value} giorni",
+          "future_distance": "Tra {value} km",
+          "future_days": "Tra {value} giorni",
+          "generic": "Stato sconosciuto"
+        }
+      }
+    }
   }
 }

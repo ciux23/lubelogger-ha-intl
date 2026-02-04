@@ -73,10 +73,12 @@ def calculate_reminder_priority(reminder: dict[str, Any]) -> tuple:
     
     Returns (priority_value, days, distance) where:
     - Lower priority_value = higher priority
-    - For Date reminders: priority_value = dueDays
-    - For Odometer reminders: priority_value = dueDistance
-    - For Both: use the smaller of the two
+    - Priority order: PastDue (negative) > Urgent (0) > NotUrgent (positive)
+    - For same urgency: use dueDays or dueDistance
     """
+    # Get urgency
+    urgency = reminder.get("urgency", "")
+    
     # Get values as numbers
     due_days_str = reminder.get("dueDays", "")
     due_distance_str = reminder.get("dueDistance", "")
@@ -91,26 +93,39 @@ def calculate_reminder_priority(reminder: dict[str, Any]) -> tuple:
     except (ValueError, TypeError):
         due_distance = 999999
     
+    # Base priority by urgency
+    if urgency == "PastDue":
+        base_priority = -10000  # Highest priority
+    elif urgency == "Urgent":
+        base_priority = 0
+    else:  # "NotUrgent" or unknown
+        base_priority = 10000
+    
     # Get metric type
     metric = reminder.get("metric", "")
     
-    # Calculate priority based on metric
+    # Calculate specific priority based on metric
     if "Date" in metric and "Odometer" not in metric:
-        # Pure date reminder
-        priority = due_days if due_days >= 0 else 999999
+        # Pure date reminder - use due days
+        if due_days < 0:  # Overdue
+            specific_priority = abs(due_days) * 10  # More overdue = higher priority
+        else:
+            specific_priority = due_days
     elif "Odometer" in metric and "Date" not in metric:
         # Pure odometer reminder
-        priority = due_distance if due_distance >= 0 else 999999
-    else:
-        # Both or unknown - use the smaller positive value
-        if due_days >= 0 and due_distance >= 0:
-            priority = min(due_days, due_distance)
-        elif due_days >= 0:
-            priority = due_days
-        elif due_distance >= 0:
-            priority = due_distance
+        if due_distance < 0:  # Overdue
+            specific_priority = abs(due_distance) * 10
         else:
-            priority = 999999
+            specific_priority = due_distance
+    else:
+        # Both or unknown - use whichever is closer
+        if due_days < 0 or due_distance < 0:  # Overdue in at least one
+            specific_priority = min(abs(due_days), abs(due_distance)) * 10
+        else:
+            specific_priority = min(due_days, due_distance)
+    
+    # Combine base priority and specific priority
+    priority = base_priority + specific_priority
     
     return (priority, due_days, due_distance)
 

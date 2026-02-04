@@ -19,5 +19,50 @@
     "abort": {
       "already_configured": "Already configured"
     }
+  },
+  "urgency": {
+    "NotUrgent": "Not urgent",
+    "Urgent": "Urgent",
+    "PastDue": "Past due"
+  },
+  "reminder_type": {
+    "By time": "By time",
+    "By distance": "By distance",
+    "Mixed": "Mixed"
+  },
+  "status": {
+    "overdue": {
+      "distance": {
+        "template": "Overdue by {value} km",
+        "1": "Overdue by 1 km",
+        "10": "Overdue by 10 km",
+        "100": "Overdue by 100 km",
+        "1000": "Overdue by 1000 km"
+      },
+      "days": {
+        "template": "Overdue by {value} days",
+        "1": "Overdue by 1 day",
+        "7": "Overdue by 7 days",
+        "30": "Overdue by 30 days",
+        "365": "Overdue by 365 days"
+      }
+    },
+    "future": {
+      "distance": {
+        "template": "In {value} km",
+        "1": "In 1 km",
+        "10": "In 10 km",
+        "100": "In 100 km",
+        "1000": "In 1000 km"
+      },
+      "days": {
+        "template": "In {value} days",
+        "1": "In 1 day",
+        "7": "In 7 days",
+        "30": "In 30 days",
+        "365": "In 365 days"
+      }
+    },
+    "generic": "Unknown status"
   }
 }

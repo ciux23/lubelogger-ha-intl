@@ -10,6 +10,7 @@ import homeassistant.helpers.config_validation as cv
 
 from .const import DOMAIN
 from .coordinator import LubeLoggerDataUpdateCoordinator
+from .services import async_register_services  # ← questa è la riga nuova importante
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +38,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
         
+        # Registriamo i servizi qui, dopo che l'entry è caricata
+        await async_register_services(hass)
+        
         _LOGGER.info("LubeLogger integration setup completed successfully")
         return True
     except Exception as err:
@@ -55,4 +59,3 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.warning("Failed to unload LubeLogger integration platforms")
 
     return unload_ok
-

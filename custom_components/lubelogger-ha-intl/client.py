@@ -196,20 +196,26 @@ class LubeLoggerClient:
         if not isinstance(records, list) or not records:
             _LOGGER.debug("No plan records found for vehicle %s", vehicle_id)
             return None
-        
+
         def sort_key(rec: dict[str, Any]) -> Any:
-            date_str = rec.get("dateCreated") or rec.get("dateModified") or rec.get("Date") or rec.get("date")
+            date_str = rec.get("date") or rec.get("Date") or rec.get("planDate")
             if date_str:
                 dt = parse_date_string(date_str)
                 if dt:
                     return dt
-            return datetime.max
-        
-        sorted_records = sorted([r for r in records if sort_key(r) != datetime.max], key=sort_key)
-        if sorted_records:
-            _LOGGER.debug("Next plan for vehicle %s: %s", vehicle_id, sorted_records[0])
-            return sorted_records[0]
-        return None
+            
+            rec_id = rec.get("id") or rec.get("Id")
+            if rec_id:
+                try:
+                    return int(rec_id)
+                except (ValueError, TypeError):
+                    return rec_id
+            return 0
+
+        sorted_records = sorted(records, key=sort_key, reverse=True)
+        next_plan = sorted_records[0] if sorted_records else None
+        _LOGGER.debug("Next plan for vehicle %s: %s", vehicle_id, next_plan)
+        return next_plan
 
     async def async_get_latest_tax(
         self, vehicle_id: int | None = None
@@ -419,6 +425,49 @@ class LubeLoggerClient:
             return next_reminder
         
         return None
+
+    async def async_add_service_record(
+        self,
+        vehicle_id: str,
+        date: str,
+        description: str,
+        odometer: float | None = None,
+        cost: float = 0.0,
+        notes: str = "",
+        custom_fields: dict | None = None,
+    ) -> dict:
+        """Add a new service record to the vehicle."""
+        endpoint = f"/api/vehicle/{vehicle_id}/servicerecords/add"
+        payload = {
+            "Date": date,
+            "Description": description,
+            "Cost": cost,
+            "Notes": notes,
+        }
+        if odometer is not None:
+            payload["Odometer"] = odometer
+        if custom_fields:
+            payload["CustomFields"] = custom_fields
+
+        return await self._async_request(endpoint, method="POST", json=payload)
+
+    async def async_add_odometer_record(
+        self,
+        vehicle_id: str,
+        mileage: float,
+        date: str | None = None,
+        notes: str = "",
+    ) -> dict:
+        """Add a new odometer record (this updates the vehicle's mileage history)."""
+        endpoint = f"/api/vehicle/{vehicle_id}/odometerrecords/add"
+        payload = {
+            "Mileage": mileage,
+            "Notes": notes,
+        }
+        if date:
+            payload["Date"] = date
+
+        return await self._async_request(endpoint, method="POST", json=payload)
 
     async def _async_request(
         self, endpoint: str, method: str = "GET", **kwargs: Any
